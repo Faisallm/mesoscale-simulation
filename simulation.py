@@ -15,6 +15,11 @@ import numpy as np
 
 # all units are in mm
 
+# global variables
+# this will store 50,000 generated aggregates
+# each aggregate is a list of x_coords and y_coords
+generated_aggregates = []
+
 
 def number_of_polygon_sides(n):
   """probability function for the number of polygon sides n."""
@@ -201,22 +206,27 @@ def generate_aggregate():
   area_check = check_area(dkl, dku)
   print(f"Required area of the polygon is {area_check}")
 
-  if 0.5 * area_check <= area <= 1.5 * area_check:
-    plt.figure()
-    plt.plot(x_coords, y_coords, marker='o')
-    plt.plot([x_coords[-1], x_coords[0]], [y_coords[-1], y_coords[0]], 'k-')
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    plt.title('Polygon from Set of Angles')
-    plt.grid(True)
-    plt.axis('equal')
-    plt.show()
+  # add generated aggregate to the list of aggregates
+  generated_aggregates.append([x_coords, y_coords])
+  print("Aggregate has been added to the database of aggregates")
+
+  # if 0.5 * area_check <= area <= 1.5 * area_check:
+  #   plt.figure()
+  #   plt.plot(x_coords, y_coords, marker='o')
+  #   plt.plot([x_coords[-1], x_coords[0]], [y_coords[-1], y_coords[0]], 'k-')
+  #   plt.xlabel('X-axis')
+  #   plt.ylabel('Y-axis')
+  #   plt.title('Polygon from Set of Angles')
+  #   plt.grid(True)
+  #   plt.axis('equal')
+  #   plt.show()
 
 
 # # calling the 
 # if __name__ == "__main__":
-#   for _ in range(10):
-generate_aggregate()
+for _ in range(1000):
+  # generate 10 aggregates
+  generate_aggregate()
 
 
 
@@ -233,3 +243,114 @@ generate_aggregate()
 # # the number of n-sided aggregates out of the sample size
 # print([probability*50000 for probability in probabilities])
 # print(sum([probability*50000 for probability in probabilities]))
+
+
+
+
+
+# packing of aggregates
+
+import matplotlib.pyplot as plt
+import random
+
+
+# global variables
+trial_locations = []
+
+def generate_trial_location(square_size, num_of_trials=10):
+  """This will generate the trial aggregate locations"""
+
+  trial_locations = []
+  for _ in range(num_of_trials):
+    x = int(random.uniform(0, square_size))
+    y = int(random.uniform(0, square_size))
+
+    trial_locations.append((x, y))
+
+  return trial_locations
+
+
+def sort_aggregates(agregate_list):
+  """This will arrange the aggregate is a descending
+    order of size"""
+
+  return sorted(agregate_list, key=lambda x: max(x), reverse=True)
+
+
+def set_origin(aggregate, location):
+  """This will place the aggregate at the generated
+  aggregate location.
+  aggregate: is a list containing [x_coords, y_coords]
+  location: (x, y)"""
+
+  # old version
+  # aggregate[0].insert(0, location[0])   # x_coord
+  # aggregate[1].insert(0, location[1])   # x_coord
+  
+  # new version
+  # substracting x_coords
+  # print(f"location: {location}")
+  for index, x in enumerate(aggregate[0]):
+    aggregate[0][index] -= location[0]
+
+    # print(f"old: {x}, new: {aggregate[0][index]}")
+  # substracting y_coords
+
+  for index, y in enumerate(aggregate[1]):
+    aggregate[1][index] -= location[1]
+    # print(f"old: {x}, new: {aggregate[1][index]}")
+
+  return aggregate
+
+def place_aggregates():
+  global trial_locations
+
+  # this will return a list of locations
+  trial_locations = generate_trial_location(1000, 1000);
+
+  # sort aggregate by size (descending order)
+  sorted_aggregates = sort_aggregates(generated_aggregates)
+
+  # pop an aggregate out of the queue and place at...
+  # a randomly selected trial position
+  for aggregate, location in zip(sorted_aggregates, trial_locations):
+    set_origin(aggregate, location)
+
+
+  for i in range(len(sorted_aggregates)):
+    print(f"Aggregates: {sorted_aggregates[i]}, location: {trial_locations[i]}")
+
+  square_size = -1000
+
+  # Create a figure and axis
+  fig, ax = plt.subplots()
+
+  for aggregate in sorted_aggregates:
+    print(aggregate[0])
+    ax.plot(aggregate[0], aggregate[1])
+
+  # Set axis limits to the square area
+  ax.set_xlim(0, square_size) 
+  ax.set_ylim(0, square_size)
+
+  # Set aspect ratio to ensure the square shape
+  ax.set_aspect('equal')
+
+  # Show the plot 
+  plt.show()
+
+
+
+
+
+place_aggregates()
+
+
+
+# generate_trial_location(50, 10)
+
+# sorting list of aggregates by maximum value
+
+
+# for i in range(10):
+#   print(calculate_polygon_area(sorted_aggregates[i][0], sorted_aggregates[i][1]))
